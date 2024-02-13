@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>CGI Help Desk Chatbot</title>
+    <style>
+        body {
+            font: 15px 'Ubuntu', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: hsl(0, 0%, 99%);
+        }
+
+        #chat-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 4px;
+        }
+
+        #chat-history {
+            background-color: rgb(244, 244, 241);
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            max-width: 720px;
+            width: 100%;
+            height: 376px;
+            overflow-y: auto;
+            padding: 8px;
+            margin-bottom: 6px;
+        }
+
+        .user-message {
+            background-color: rgb(26, 139, 159);
+            color: rgb(254, 253, 253);
+            font-size: 13px;
+            padding: 9px;
+            margin: 5px 0;
+            border-radius: 5px;
+            text-align: left;
+            max-width: 90%;
+            font-family: 'KaiTi', sans-serif;
+            margin-right: auto;
+        }
+
+        .chatbot-message {
+            background-color: #e7e3e3;
+            color: rgb(10, 10, 10);
+            font-size: 13px;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            text-align: right;
+            max-width: 90%;
+            font-family: 'Ubuntu', sans-serif;
+            font-style: italic;
+            margin-left: auto;
+        }
+
+        .input-container {
+            background-color: #dedbdb;
+            color: rgb(10, 10, 10);
+            display: flex;
+            align-items: center;
+            width: 97.5%;
+            padding: 1.5px 4px;
+        }
+
+        textarea#user-input {
+            background-color: #f1eeee;
+            color: rgb(21, 21, 21);
+            width: 100%;
+            resize: none;
+            text-align: left;
+            padding: 4px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+
+        button#send-button {
+            background-color: #007acc;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button#send-button span {
+            font-weight: bold;
+            font-size: 24px;
+            display: inline-block;
+            margin-left: 5px;
+        }
+
+        img#send-button {
+            width: 30px;
+            height: 30px;
+            margin-right: 10px;
+        }
+
+        img#clear-button {
+            width: 30px;
+            height: 30px;
+            margin-right: 10px;
+        }
+
+        img#reset-button {
+            width: 30px;
+            height: 30px;
+            margin-right: 10px;
+        }
+
+        #icon_bar {
+            text-align: center;
+        }
+
+        #icon_bar img {
+            width: 48px;
+            height: 45px;
+            margin: 0 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="icon_bar">
+        <img src="/static/clear.png" alt="Reset" id="reset-button" title="Reset Chat">
+    </div>
+
+    <div id="chat-container">
+        <div id="chat-history"></div>
+        <div class="input-container">
+            <textarea id="user-input" placeholder="Your Request" rows="3"></textarea>
+            <img src="/static/sendmessage.jpg" alt="Send" id="send-button" title="Send Request">
+            <img src="/static/clearmessage.png" alt="Clear" id="clear-button" title="Clear Input">
+        </div>
+    </div>
+
+    <audio id="notification-sound" src="/static/notification.mp3" preload="auto"></audio>
+
+    <script>
+        const chatHistory = document.getElementById('chat-history');
+        const userInput = document.getElementById('user-input');
+        const sendButton = document.getElementById('send-button');
+        const clearButton = document.getElementById('clear-button');
+        const resetButton = document.getElementById('reset-button');
+        const notificationSound = document.getElementById('notification-sound');
+
+        sendButton.addEventListener('click', () => {
+            const userMessage = userInput.value;
+            chatHistory.innerHTML += `<p class="user-message"><img src="/static/customerrole.jpg" alt="User Icon" class="icon" style="font-family: 'KaiTi', sans-serif; width: 20px; height: 20px;"> Question: ${userMessage}</p>`;
+            userInput.value = '';
+
+            // Send userMessage to the server using AJAX (e.g., Fetch API)
+            fetch('/send', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: userMessage
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const botResponse = data.response;
+                    chatHistory.innerHTML += `<p class="chatbot-message"><img src="/static/bothelper.png" alt="Bot Icon" class="icon" style="font: 15px 'Ubuntu', sans-serif; width: 20px; height: 20px; "> Answer: ${botResponse}</p>`;
+                    // Play notification sound
+                    notificationSound.play();
+                    // Scroll to the bottom of the chat history
+                    chatHistory.scrollTop = chatHistory.scrollHeight;
+                });
+        });
+
+        resetButton.addEventListener('click', () => {
+            fetch('/reset_history', {
+            method: 'GET'
+           })
+           .then(response => response.json())
+           .then(data => {
+            console.log(data); // Log the response to the console or handle it as needed
+        })
+           .catch(error => console.error('Error:', error));
+        });
+
+        clearButton.addEventListener('click', () => {
+            chatHistory.innerHTML = ''; // Clear the chat history
+        });
+    </script>
+</body>
+
+</html>
